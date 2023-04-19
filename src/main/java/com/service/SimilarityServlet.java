@@ -24,10 +24,8 @@ import java.io.InputStream;
 @WebServlet("/similarity")
 @MultipartConfig
 public class SimilarityServlet extends HttpServlet {
+    //显式声明 版本号
     private static final long serialVersionUID = 1L;
-    private InputStream oriContent;
-    private  InputStream monContent;
-    private static final String uploadPath = "D:/Javalearning/video_similarity/static/videos/";
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doGet(req,resp);
@@ -38,7 +36,8 @@ public class SimilarityServlet extends HttpServlet {
         //读取文件上传
         Part oriVideo = req.getPart("ori_video");
         Part monVideo = req.getPart("mon_video");
-        System.out.println(oriVideo);
+        //System.out.println(oriVideo);
+        //存储上传的文件，保存在地址
         File oriFile = new File(oriVideo.getSubmittedFileName());
         File monFile = new File(monVideo.getSubmittedFileName());
         oriVideo.write(oriFile.getAbsolutePath());
@@ -47,38 +46,46 @@ public class SimilarityServlet extends HttpServlet {
         //提取关键帧
         int ori = KeyFrameExtractor.video_process(oriFile, "D:/minIO/Files/images1/");
         int mon = KeyFrameExtractor.video_process(monFile, "D:/minIO/Files/images2/");
-        int sum = 0;
-        Double average=0.0;
+        int sum = 0;  //汉明距离总和
+        Double average=0.0;  //均值
         for (int i = 0; i <ori ; i+=20) {
-            String oriName = "D:/minIO/Files/images1/"+"frame_" + i + ".jpg";
+            //绝对路径取出图片文件
             File oriImage = new File("D:/minIO/Files/images1/frame_"+i+".jpg");
-            System.out.println(oriImage.getAbsolutePath());
+            //System.out.println(oriImage.getAbsolutePath());
             for(int j=0;j<mon;j+=20){
-                String monName = "D:/minIO/Files/images2/"+"frame_"+j+".jpg";
                 File monImage = new File("D:/minIO/Files/images2/frame_"+j+".jpg");
-                System.out.println(monImage.getAbsolutePath());
+                //System.out.println(monImage.getAbsolutePath());
+
+                //获取两个图片文件的dhash值
                 String oriHash = ImageDHash.getDHash(oriImage);
                 String monHash = ImageDHash.getDHash(monImage);
 
+                //计算二者的汉明距离
                 long hammingDistance = ImageDHash.getHammingDistance(oriHash, monHash);
                 sum+=hammingDistance;
             }
         }
-        System.out.println(sum);
+        //System.out.println(sum);
+        //取得总帧数
         int total_Frames = Math.max(ori, mon);
+        //获取关键帧图片数量
         Double cnt = total_Frames/20*1.0;
-        System.out.println(ori);
-        System.out.println(mon);
-        System.out.println(cnt);
+//        System.out.println(ori);
+//        System.out.println(mon);
+//        System.out.println(cnt);
+        //计算均值
         average=sum/cnt;
-        System.out.println(average);
+//        System.out.println(average);
+        //比率
         Double rate;
         if(average<5) {
+            //这里有一个bug，5 为阈值，<5 认定为同一张图片，这里的相似度计算还需要斟酌一下计算
              rate = 4.9/5*100;
         }
         else{
             rate = average%100;
         }
+        //转发结果，调用界面
         req.setAttribute("message","两个视频相似度为"+rate+"%");
         req.getRequestDispatcher("/result.jsp").forward(req,resp);
     }

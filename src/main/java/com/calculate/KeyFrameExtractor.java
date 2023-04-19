@@ -18,6 +18,7 @@ public class KeyFrameExtractor {
      * @date 2023/4/17 13:05
      * 提取视频关键帧
      * 以20帧为间隔
+     * @return 传入文件的总帧数
      */
     @Test
     public static int video_process(File file,String outputPath) {
@@ -31,7 +32,7 @@ public class KeyFrameExtractor {
             int frameCount = grabber.getLengthInFrames();
             //System.out.println(frameCount);
             int frameRate = (int) grabber.getFrameRate();
-
+            //提取图片
             for (int i = 0; i < frameCount; i += frameInterval) {
                 Frame frame = grabber.grabImage();
                 BufferedImage image = Java2DFrameUtils.toBufferedImage(frame);
